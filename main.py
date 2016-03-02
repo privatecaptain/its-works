@@ -1,14 +1,9 @@
-from flask import Flask,render_template,request,make_response,redirect,url_for,session
-import requests
+from flask import Flask,render_template,request,make_response,redirect,url_for,session,Response
 from flask.ext.sqlalchemy import SQLAlchemy
 import json
-import os
-from werkzeug import secure_filename
-import uuid
 from flask.ext.login import LoginManager,login_user,logout_user,login_required,current_user
 from sqlalchemy.ext.hybrid import hybrid_property
 from flask.ext.bcrypt import Bcrypt
-from datetime import datetime
 
 app = Flask(__name__,static_url_path="/static")
 app.debug = True
@@ -30,7 +25,7 @@ bcrypt = Bcrypt(app)
 
 SECRET_KEY = '$&^&B&*^*MN&*CDMN&*()B^&*()P^&_N*NM(P)*&D()&*^'
 app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql://root:badman1108@localhost/itsworks'
-
+app.config['SERVER_NAME'] = 'localhost:5000'
 
 
 app.config['SECRET_KEY'] = 'faefea%$W#^TGV%$*$&^DSG'
@@ -40,8 +35,6 @@ app.config['SECRET_KEY'] = 'faefea%$W#^TGV%$*$&^DSG'
 db = SQLAlchemy(app)
 
 
-def generate_id():
-	return str(uuid.uuid4().hex)
 
 
 from models import *
@@ -52,18 +45,27 @@ def index():
 
 
 
-@app.route('/create-task',methods=['GET','POST'])
-def create_task():
+@app.route('/task/<text:id>',methods=['GET','POST','PUT','DELETE'])
+def task():
 
 	if request.method == 'POST':
 		params = request.form
 		task = Task(params)
-		db.session.add(task)
-		db.session.commit()
+		commit(task)
 		return str(task.id)
 
 	return render_template('create_task.html')
 
+
+# The MakeMyLifeEasier Functions
+
+def commit(obj):
+	db.session.add(obj)
+	db.session.commit()
+
+def mark_complete(task):
+	task.complete = True
+	commit(task)
 
 
 
